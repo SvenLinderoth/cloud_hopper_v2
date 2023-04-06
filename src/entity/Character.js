@@ -2,13 +2,17 @@ class Character extends rune.display.Sprite {
     constructor(x, y, w, h, img){
         super(x, y, w, h, img);
 
-        this.speed = 1;
+        this.speed = 2;
         this.gamepad = null; 
         //init Y position for going back after jump, use platforms/clouds later for check with char?
         this.initY = y;
         this.isJumping = false;
         //velocity for jumping, updates dynamically by (step) when holding down a press(btn)
         this.vel = 0;
+        this.gravity = 2;
+
+        this.life = 2;
+
     }
     init() {
         super.init();
@@ -47,17 +51,18 @@ class Character extends rune.display.Sprite {
             this.flippedX = false;
         }
         //jump call 
-        if (this.keyboard.justPressed("SPACE")) {
+        if (this.keyboard.pressed("SPACE")) {
+            console.log(this.isJumping)
             if (!this.isJumping) {
-                console.log('just_press')
+                //console.log(step);
+                //console.log('just_press')
                 this.vel += Math.floor(step);
             }
         }
         if (this.keyboard.justReleased("SPACE")) {
             if (!this.isJumping) {
                 console.log(this.vel)
-                console.log('release')
-                this.isJumping = true;
+                //console.log('release')
                 this.calcStep();
             }
         }
@@ -65,19 +70,23 @@ class Character extends rune.display.Sprite {
     calcStep() {
         if (this.vel > 0 && this.vel < 50) {
             this.y -= 5;
-            this.x += 5;
+            this.x += 10;
         }
         else if (this.vel > 50 && this.vel < 100) {
             this.y -= 10;
-            this.x += 10;
+            this.x += 20;
         }
         else if (this.vel > 100 && this.vel < 200) {
             this.y -= 20;
-            this.x += 20;
+            this.x += 30;
         }
         else if (this.vel > 200 && this.vel < 300) {
             this.y -= 30;
-            this.x += 30;
+            this.x += 40;
+        }
+        else {
+            this.y -= 50;
+            this.x += 70;
         }
         this.vel = 0;
         //this.keyboard.reset();
@@ -91,16 +100,27 @@ class Character extends rune.display.Sprite {
     characterAnimations() {
         this.animation.create('idle', [0,1], 2, true);
         this.animation.create('walking', [2,3,4,5,6], 5, true);
+        //animation för jump 
     }
     updatePosition(step) {
         //later check if character is on a cloud or etcetc
-        if (this.isJumping) {
-            if (this.y < this.initY)
-            this.y += 1;
+        if (this.y < this.initY) {
+            this.y += this.gravity;
+            this.isJumping = true;
         }
         else if (this.y == this.initY) {
             this.isJumping = false;
-            console.log('landed')
+            //console.log('landed')
         }
+    }
+    gotHit() {
+        if(!this.immortal) {
+            this.life -= 1;
+            this.immortal = true;
+            this.flicker.start(1000, 30, function() {
+                this.immortal = false;
+            }, this);
+        }
+        console.log(this.life);
     }
 }

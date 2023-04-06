@@ -44,6 +44,7 @@ cloud_hop.data.Requests.prototype.constructor = cloud_hop.data.Requests;
 cloud_hop.data.Requests.prototype.m_construct = function() {
     rune.resource.Requests.prototype.m_construct.call(this);
     this.add("cloud_dangerous", "./../asset/img/cloud_dangerous.png");
+	this.add("heart", "./../asset/img/heart.png");
 	this.add("pink_frog", "./../asset/img/pink_frog.png");
 	this.add("renthy", "./../asset/img/renthy.png");
 	this.add("jump_chant_far", "./../asset/wav/character_effects/jump_chant_far.wav");

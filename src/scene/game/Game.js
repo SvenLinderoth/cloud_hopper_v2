@@ -44,17 +44,29 @@ cloud_hop.scene.Game.prototype.constructor = cloud_hop.scene.Game;
  */
 cloud_hop.scene.Game.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
-    
     // var text = new rune.text.BitmapField("Hello World!");
     // text.autoSize = true;
     // text.center = this.application.screen.center;
     // this.stage.addChild(text);
 
+    //enemy cloud
+    this.enemy = new Cloud_Dangerous(150, 75);
+    this.stage.addChild(this.enemy);
+    //this.enemy.hitbox.set(0,0,32,32)
+    this.enemy.hitbox.debug = true;
+    //LIFE
+    this.heart = new Heart(200, 75);
+    this.stage.addChild(this.heart);
+    this.heart.hitbox.debug = true;
+
     //player obj
     this.player = new Character(75, 75, 32, 32, 'renthy');
     this.stage.addChild(this.player);
+    //this.player.hitbox.set(0,0,32,32);
+    this.player.hitbox.debug = true; 
+
     //camera on player
-    //this.cameras.getCameraAt(0).targets.add(this.player);
+    this.cameras.getCameraAt(0).targets.add(this.player);
 
     //music on music (master, music, sound)
     this.music_menu = this.application.sounds.music.get('mainmenu_music_intro', true);
@@ -72,6 +84,19 @@ cloud_hop.scene.Game.prototype.init = function() {
  */
 cloud_hop.scene.Game.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
+    if (this.player.hitTestObject(this.enemy, this.player.gotHit));
+
+    if (this.player.hitTestObject(this.heart)) {
+        this.player.life = this.player.life + this.heart.value;
+        console.log(this.player.life)
+        this.heart.y -= 5;
+
+        this.heart.value = 0;
+        //?
+        //this.heart=null
+        //this.stage.removeChild(this.heart);
+    }
+
 };
 
 /**
