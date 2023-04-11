@@ -44,10 +44,15 @@ cloud_hop.data.Requests.prototype.constructor = cloud_hop.data.Requests;
 cloud_hop.data.Requests.prototype.m_construct = function() {
     rune.resource.Requests.prototype.m_construct.call(this);
     this.add("cloud_dangerous", "./../asset/img/cloud_dangerous.png");
+	this.add("cloud_neutral", "./../asset/img/cloud_neutral.png");
 	this.add("heart", "./../asset/img/heart.png");
+	this.add("lollipopv1", "./../asset/img/lollipopv1.png");
 	this.add("pink_frog", "./../asset/img/pink_frog.png");
 	this.add("renthy", "./../asset/img/renthy.png");
+	this.add("electric_shock", "./../asset/wav/character_effects/electric_shock.wav");
 	this.add("jump_chant_far", "./../asset/wav/character_effects/jump_chant_far.wav");
 	this.add("jump_chant_medium", "./../asset/wav/character_effects/jump_chant_medium.wav");
+	this.add("LIFE_UP", "./../asset/wav/character_effects/LIFE_UP.wav");
 	this.add("mainmenu_music_intro", "./../asset/wav/mainmenu_music_intro.wav");
+	this.add("mainmenu_v2", "./../asset/wav/mainmenu_v2.wav");
 };
