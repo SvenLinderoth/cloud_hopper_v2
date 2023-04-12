@@ -49,6 +49,17 @@ cloud_hop.scene.Game.prototype.init = function() {
     // text.autoSize = true;
     // text.center = this.application.screen.center;
     // this.stage.addChild(text);
+    
+    //background
+    var background = new rune.display.Graphic(
+        -200,
+        -200,
+        2200,
+        1400,
+        'background_test_clouds'
+    )
+    this.stage.addChild(background);
+
     //--------------------------------------------------------------
     //enemy cloud
     this.enemy = new Cloud_Dangerous(250, 75);
@@ -69,17 +80,20 @@ cloud_hop.scene.Game.prototype.init = function() {
     //player obj
     this.player = new Character(75, 75, 32, 32, 'renthy');
     this.stage.addChild(this.player);
+
     //camera on player
     this.cameras.getCameraAt(0).targets.add(this.player);
+
+    this.generator = new Generator_StageOne(this.player.minJump, this.player.maxJump);
 
     //music on music (master, music, sound)
     this.music_menu = this.application.sounds.music.get('mainmenu_music_intro', true);
     this.music_menu.volume = .4;
     this.music_menu.play();
 
-     //music on music (master, music, sound)
-     this.player_dmg_electric = this.application.sounds.sound.get('electric_shock', true);
-     this.player_dmg_electric.volume = .4;
+    //music on music (master, music, sound)
+    this.player_dmg_electric = this.application.sounds.sound.get('electric_shock', true);
+    this.player_dmg_electric.volume = .4;
 };
 
 /**
@@ -99,7 +113,7 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     },this);
     //ENEMY HIT CHECK
     if (this.player.hitTestGroup(this.enemyGroup, this.player.gotHit)) {
-       this.player_dmg_electric.play(false);
+       this.player_dmg_electric.play();
     };
     //HITTING GOOD ITEM
     if (this.player.hitTestObject(this.heart)) {
@@ -110,17 +124,14 @@ cloud_hop.scene.Game.prototype.update = function(step) {
         this.heart.value = 0;
     }
 
-    //CLOUD GENERATOR -- FIX
-    if (this.cloud.generateCloud(this.player.x, this.cloudGroup)) {
-        //generate random places the clouds will spawn
-        //fixa i generateCloud method något random generate, just nu endast om där är mindre än 4 clouds
-        var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + 100), 92);
-        this.cloudGroup.addMember(cloud);
+    //var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + 100), 92);
+    var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + this.generator.randomX()), this.generator.randomY());
+    this.cloudGroup.addMember(cloud);
 
         this.cloudGroup.forEachMember(function(c) {
             this.stage.addChild(c);
         }, this);
-    }
+
     if (this.player.hitTestGroup(this.cloudGroup)) {
         //console.log('ON CLOUD')
         this.player.isJumping = false;
@@ -141,3 +152,6 @@ cloud_hop.scene.Game.prototype.update = function(step) {
 cloud_hop.scene.Game.prototype.dispose = function() {
     rune.scene.Scene.prototype.dispose.call(this);
 };
+
+
+

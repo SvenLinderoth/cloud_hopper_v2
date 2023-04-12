@@ -15,6 +15,9 @@ class Character extends rune.display.Sprite {
         this.gravity = 2;
 
         this.life = 2;
+
+        this.maxJump = 300;
+        this.minJump = 10;
     }
     init() {
         super.init();
@@ -83,7 +86,8 @@ class Character extends rune.display.Sprite {
         }   
         else {
             height = 50;
-            distance = 100;
+            distance = 70;
+            //distance = this.maxJump;
         }
         this.updateJump(height, distance);
         this.vel = 0;

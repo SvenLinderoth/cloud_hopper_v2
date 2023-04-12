@@ -3,7 +3,7 @@ class Cloud_Neutral extends rune.display.Sprite {
         super(x, y, 32, 32, 'cloud_neutral');
 
         this.hitbox.debug = true; 
-        this.hitbox.set(0, 10, 32, 20)
+        this.hitbox.set(0, 10, 32, 5)
     }
     init() {
         super.init();
@@ -16,11 +16,16 @@ class Cloud_Neutral extends rune.display.Sprite {
     characterAnimations() {
         this.animation.create('idle', [0,1,2,3], 4, true);
     }
-    generateCloud(playerX, clouds) {
-        var x = 0;
-        clouds.forEachMember(function(c) {
-            x++;
-        },this) 
-        if (x < 4) return true;
+    //RANDOM GENERATION ---------------
+    //lägg in i random generator object för olika stages i det objektet
+    randomX() {
+        var max = 200;
+        var min = 20;
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    randomY() {
+        var max = 0;
+        var min = 100;
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 }
