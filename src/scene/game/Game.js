@@ -18,11 +18,32 @@ cloud_hop.scene.Game = function() {
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
     /**
      * Calls the constructor method of the super class.
      */
     rune.scene.Scene.call(this);
+
+    // score private
+    var score = 0;
+    //set and return score
+    this.setScore = function (points) {
+        score += points;
+    }
+    this.getScore = function () {
+        return score;
+    }
+    this.playSoundJump = function () {
+        var soundEff = this.application.sounds.sound.get('jump_chant_medium', true);
+        soundEff.play();
+    }
+    this.playSoundJumpLong = function () {
+        var soundEff = this.application.sounds.sound.get('jump_chant_far', true);
+        soundEff.play();
+    }
+    this.playSoundItem = function () {
+        var soundEff = this.application.sounds.sound.get('LIFE_UP', true);
+        soundEff.play();
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -59,13 +80,15 @@ cloud_hop.scene.Game.prototype.init = function() {
         'background_test_clouds'
     )
     this.stage.addChild(background);
+    //candy group
+    this.candyGroup = new rune.display.DisplayGroup(this.stage);
 
     //--------------------------------------------------------------
     //enemy cloud
     this.enemy = new Cloud_Dangerous(250, 75);
     this.enemyGroup = new rune.display.DisplayGroup(this.stage);
     this.enemyGroup.addMember(this.enemy);
-
+    
     //LIFE
     this.heart = new Heart(200, 75);
     this.stage.addChild(this.heart);
@@ -89,7 +112,7 @@ cloud_hop.scene.Game.prototype.init = function() {
     //music on music (master, music, sound)
     this.music_menu = this.application.sounds.music.get('mainmenu_music_intro', true);
     this.music_menu.volume = .4;
-    this.music_menu.play();
+    //this.music_menu.play();
 
     //music on music (master, music, sound)
     this.player_dmg_electric = this.application.sounds.sound.get('electric_shock', true);
@@ -123,21 +146,42 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //this.stage.removeChild(this.heart);
         this.heart.value = 0;
     }
-
-    //var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + 100), 92);
+    //cloud gen, candy generate
     var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + this.generator.randomX()), this.generator.randomY());
+    //candy, x, y, value (standard candy = 1)
+    //tar alla clouds x och y, och centrerar en godis på toppen av molnet
+    var candy = new Candy((cloud.x + 6), (cloud.y - 10), 1);
     this.cloudGroup.addMember(cloud);
+    this.candyGroup.addMember(candy);
 
         this.cloudGroup.forEachMember(function(c) {
             this.stage.addChild(c);
+        }, this);
+        this.candyGroup.forEachMember(function(c) {
+            this.stage.addChild(c);
+            if (this.player.hitTestObject(c)) { 
+                this.setScore(c.value);
+                //ta bort aktuell candy som tas
+                c.value = 0;
+                c.dispose();
+                c = null;
+                this.playSoundItem();
+            }
         }, this);
 
     if (this.player.hitTestGroup(this.cloudGroup)) {
         //console.log('ON CLOUD')
         this.player.isJumping = false;
     } else {
-        //this.player.y += this.player.gravity + 1;
         this.player.isJumping = true;
+    }
+    if (this.player.justJumped && this.player.longJump) {
+        this.playSoundJumpLong();
+        this.player.longJump = false;
+        this.player.justJumped = false;
+    } else if (this.player.justJumped) {
+        this.playSoundJump();
+        this.player.justJumped = false;
     }
 };
 

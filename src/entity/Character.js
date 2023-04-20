@@ -18,6 +18,9 @@ class Character extends rune.display.Sprite {
 
         this.maxJump = 300;
         this.minJump = 10;
+
+        this.justJumped = false;
+        this.longJump = false;
     }
     init() {
         super.init();
@@ -68,6 +71,7 @@ class Character extends rune.display.Sprite {
                 console.log(this.vel)
                 //console.log('release')
                 this.calcStep();
+                this.justJumped = true;
             }
         }
     }
@@ -77,17 +81,32 @@ class Character extends rune.display.Sprite {
         if (this.vel > 0 && this.vel < 100) {
             height = 10;
             distance = 20;
-            //this.updateJump(height, distance);
         }
         else if (this.vel > 100 && this.vel < 300){
             height = 30;
             distance = 50;
-            //this.updateJump(height, distance);
         }   
+        else if (this.vel > 300 && this.vel < 500){
+            height = 80;
+            distance = 120;
+        }
+        else if (this.vel > 500 && this.vel < 700){
+            height = 90;
+            distance = 160;
+        }
+        else if (this.vel > 700 && this.vel < 900){
+            height = 90;
+            distance = 200;
+        }
+        else if (this.vel > 900 && this.vel < 1100){
+            height = 100;
+            distance = 240;
+            this.longJump = true;
+        }
         else {
-            height = 50;
-            distance = 70;
-            //distance = this.maxJump;
+            height = 120;
+            distance = this.maxJump;
+            this.longJump = true;
         }
         this.updateJump(height, distance);
         this.vel = 0;

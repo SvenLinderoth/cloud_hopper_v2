@@ -54,6 +54,7 @@ cloud_hop.data.Requests.prototype.m_construct = function() {
 	this.add("electric_shock", "./../asset/wav/character_effects/electric_shock.wav");
 	this.add("jump_chant_far", "./../asset/wav/character_effects/jump_chant_far.wav");
 	this.add("jump_chant_medium", "./../asset/wav/character_effects/jump_chant_medium.wav");
+	this.add("LIFE_UP", "./../asset/wav/character_effects/LIFE_UP.wav");
 	this.add("mainmenu_music_intro", "./../asset/wav/mainmenu_music_intro.wav");
 	this.add("mainmenu_v2", "./../asset/wav/mainmenu_v2.wav");
 };
