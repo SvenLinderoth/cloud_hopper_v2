@@ -2,9 +2,11 @@ class Generator_StageOne {
     constructor(minJump, maxJump) {
         this.minJump = minJump;
         this.maxJump = maxJump;
+
+        this.maxEnemies = 1;
     }
     init() {
-
+        //
     }
     randomX() {
         var max = this.maxJump;
@@ -15,5 +17,11 @@ class Generator_StageOne {
         var max = 0;
         var min = 100;
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    getEnemy(group) {
+        if (group < this.maxEnemies) {
+            return true;
+        }
+        else return false;
     }
 }

@@ -32,16 +32,10 @@ cloud_hop.scene.Game = function() {
     this.getScore = function () {
         return score;
     }
-    this.playSoundJump = function () {
-        var soundEff = this.application.sounds.sound.get('jump_chant_medium', true);
-        soundEff.play();
-    }
-    this.playSoundJumpLong = function () {
-        var soundEff = this.application.sounds.sound.get('jump_chant_far', true);
-        soundEff.play();
-    }
+
+    //this.application.sounds finns överallt
     this.playSoundItem = function () {
-        var soundEff = this.application.sounds.sound.get('LIFE_UP', true);
+        var soundEff = this.application.sounds.sound.get('pickupCoin', false);
         soundEff.play();
     }
 };
@@ -66,57 +60,67 @@ cloud_hop.scene.Game.prototype.constructor = cloud_hop.scene.Game;
 cloud_hop.scene.Game.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     //--------------------------------------------------------------
-    // var text = new rune.text.BitmapField("Hello World!");
-    // text.autoSize = true;
-    // text.center = this.application.screen.center;
-    // this.stage.addChild(text);
-    
+    this.text = new rune.text.BitmapField("Score: " + this.getScore());
+    this.text.autoSize = true;
+    //--------------------------------------------------------------
+    //player obj
+    //--------------------------------------------------------------
+    this.player = new Character(75, 75, 32, 32, 'renthy');
+    this.generator = new Generator_StageOne(this.player.minJump, this.player.maxJump);
+    //--------------------------------------------------------------
     //background
-    var background = new rune.display.Graphic(
+    //--------------------------------------------------------------
+    this.background = new Background(
         -200,
         -200,
-        2200,
-        1400,
-        'background_test_clouds'
+        1280,
+        720,
+        'graphic_background'
     )
-    this.stage.addChild(background);
+    this.stage.addChild(this.background);
+    //--------------------------------------------------------------
+    //Grass bottom of background
+    //--------------------------------------------------------------
+    this.grass = new rune.display.Graphic(
+        this.background.x,
+        this.background.y + this.background.height,
+        1280,
+        200,
+        'grass2'
+    );
+    this.stage.addChild(this.grass);
+    //--------------------------------------------------------------
     //candy group
+    //--------------------------------------------------------------
     this.candyGroup = new rune.display.DisplayGroup(this.stage);
-
     //--------------------------------------------------------------
     //enemy cloud
-    this.enemy = new Cloud_Dangerous(250, 75);
+    //--------------------------------------------------------------
+    this.enemy = new Cloud_Dangerous(
+        (this.background.x + this.background.width),
+        this.generator.randomY()
+    );
     this.enemyGroup = new rune.display.DisplayGroup(this.stage);
     this.enemyGroup.addMember(this.enemy);
-    
-    //LIFE
-    this.heart = new Heart(200, 75);
-    this.stage.addChild(this.heart);
-    this.heart.hitbox.debug = true;
-
+    //--------------------------------------------------------------
     //cloud neutral into cloudgroup (use this.cloud methods)
+    //--------------------------------------------------------------
     this.cloud = new Cloud_Neutral((this.previousCloudX = 75), 92);
+    //--------------------------------------------------------------
     //CLOUD GROUP NEUTRALS; PLAYER CAN MOVE ON
+    //--------------------------------------------------------------
     this.cloudGroup = new rune.display.DisplayGroup(this.stage);
     this.cloudGroup.addMember(this.cloud);
-    
-    //player obj
-    this.player = new Character(75, 75, 32, 32, 'renthy');
+    //--------------------------------------------------------------
+    //player obj add to stage
     this.stage.addChild(this.player);
-
+    //--------------------------------------------------------------
     //camera on player
     this.cameras.getCameraAt(0).targets.add(this.player);
-
-    this.generator = new Generator_StageOne(this.player.minJump, this.player.maxJump);
-
+    //--------------------------------------------------------------
     //music on music (master, music, sound)
-    this.music_menu = this.application.sounds.music.get('mainmenu_music_intro', true);
+    this.music_menu = this.application.sounds.music.get('mainmenu_music_intro', false);
     this.music_menu.volume = .4;
-    //this.music_menu.play();
-
-    //music on music (master, music, sound)
-    this.player_dmg_electric = this.application.sounds.sound.get('electric_shock', true);
-    this.player_dmg_electric.volume = .4;
 };
 
 /**
@@ -129,33 +133,87 @@ cloud_hop.scene.Game.prototype.init = function() {
  */
 cloud_hop.scene.Game.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
-
+    //--------------------------------------------------------------
+    //Background 
+    //--------------------------------------------------------------
+    var camera = this.cameras.getCameraAt(0);
+    var background = this.background;
+    if (camera.viewport.x + camera.viewport.width >= background.previousX + background.width) {
+            var newX = background.previousX + background.width;
+            var newY = background.y;
+            var newBackground = new Background(
+                newX,
+                newY,
+                1280,
+                720,
+                'graphic_background'
+            );
+            this.stage.addChild(newBackground);
+            this.background = newBackground;
+    }
+    if (this.grass.x < camera.viewport.x) {
+        this.grass.dispose();
+    }
+    this.grass = new rune.display.Graphic(
+        this.background.x,
+        this.background.y + this.background.height,
+        1280,
+        200,
+        'grass2'
+    );
+    this.stage.addChild(this.grass);
+    //--------------------------------------------------------------
+    //re render spelare annars går den bakom nästa bakgrund
+    //--------------------------------------------------------------
+    this.stage.addChild(this.player);
+    //--------------------------------------------------------------
+    this.text.dispose();
+    this.text = new rune.text.BitmapField("Score: " + this.getScore());
+    this.text.top = camera.viewport.top + 15;
+    this.text.left = camera.viewport.left + 20;
+    this.stage.addChild(this.text);
+    
+    if (this.generator.getEnemy(this.enemyGroup.getMembers().length)) {
+        var enemyCloud = new Cloud_Dangerous(
+            (camera.viewport.x + camera.viewport.width + 80),
+            this.generator.randomY()
+        );
+        this.enemyGroup.addMember(enemyCloud);
+    }
+    //--------------------------------------------------------------
     //ENEMY GROUP; RENDER
+    //--------------------------------------------------------------
     this.enemyGroup.forEachMember(function(e) {
         this.stage.addChild(e);
+        e.x -= e.speed;
+        if (e.x < camera.viewport.x) {
+            this.enemyGroup.removeMember(e);
+            e.dispose();
+        }
     },this);
+    //--------------------------------------------------------------
     //ENEMY HIT CHECK
+    //--------------------------------------------------------------
     if (this.player.hitTestGroup(this.enemyGroup, this.player.gotHit)) {
-       this.player_dmg_electric.play();
+       this.player.effects('hit');
     };
-    //HITTING GOOD ITEM
-    if (this.player.hitTestObject(this.heart)) {
-        this.player.life = this.player.life + this.heart.value;
-        console.log(this.player.life)
-        this.heart.y -= 5;
-    //this.stage.removeChild(this.heart);
-        this.heart.value = 0;
-    }
+    //--------------------------------------------------------------
     //cloud gen, candy generate
-    var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + this.generator.randomX()), this.generator.randomY());
-    //candy, x, y, value (standard candy = 1)
-    //tar alla clouds x och y, och centrerar en godis på toppen av molnet
-    var candy = new Candy((cloud.x + 6), (cloud.y - 10), 1);
-    this.cloudGroup.addMember(cloud);
-    this.candyGroup.addMember(candy);
-
+    //--------------------------------------------------------------
+    if (this.cloudGroup.getMembers().length < 10) {
+        var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + this.generator.randomX()), this.generator.randomY());
+        //candy, x, y, value (standard candy = 1)
+        //tar alla clouds x och y, och centrerar en godis på toppen av molnet
+        var candy = new Candy((cloud.x + 6), (cloud.y - 10), 1);
+        this.cloudGroup.addMember(cloud);
+        this.candyGroup.addMember(candy);
+    } 
+    //console.log(this.cloudGroup.getMembers().length)
         this.cloudGroup.forEachMember(function(c) {
             this.stage.addChild(c);
+            if (c.x < camera.viewport.x) {
+                c.dispose();
+            }
         }, this);
         this.candyGroup.forEachMember(function(c) {
             this.stage.addChild(c);
@@ -167,22 +225,34 @@ cloud_hop.scene.Game.prototype.update = function(step) {
                 c = null;
                 this.playSoundItem();
             }
-        }, this);
-
+        }, this);   
+    
+    //--------------------------------------------------------------
+    //hittest clouds
+    //--------------------------------------------------------------
     if (this.player.hitTestGroup(this.cloudGroup)) {
         //console.log('ON CLOUD')
         this.player.isJumping = false;
     } else {
         this.player.isJumping = true;
     }
-    if (this.player.justJumped && this.player.longJump) {
-        this.playSoundJumpLong();
-        this.player.longJump = false;
-        this.player.justJumped = false;
-    } else if (this.player.justJumped) {
-        this.playSoundJump();
-        this.player.justJumped = false;
+    //--------------------------------------------------------------
+    //hittest grass, fell to ground = call to game over method later
+    //--------------------------------------------------------------
+    if (this.grass.hitTestObject(this.player)) {
+        if (this.player.y > 570) this.player.gravity = 0;
+        console.log('game over, landed on grass');
+        console.log('score: ' + this.getScore());
+
+        this.text = new rune.text.BitmapField("Game Over! Score: " + this.getScore());
+
+        this.text.center = camera.viewport.center;
+        this.text.y = this.text.y - 30;
+    
+        this.stage.addChild(this.text);
     }
+    //--------------------------------------------------------------
+    //--------------------------------------------------------------
 };
 
 /**

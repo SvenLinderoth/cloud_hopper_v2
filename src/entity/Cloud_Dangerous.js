@@ -2,6 +2,7 @@ class Cloud_Dangerous extends rune.display.Sprite {
     constructor(x, y){
         super(x, y, 32, 32, 'cloud_dangerous');
 
+        this.speed = 1;
         //this.hitbox.set(0,0,32,32)
         this.hitbox.debug = true;
     }

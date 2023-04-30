@@ -14,33 +14,59 @@ class Character extends rune.display.Sprite {
         this.vel = 0;
         this.gravity = 2;
 
-        this.life = 2;
+        this.life = 1;
 
-        this.maxJump = 300;
+        this.maxJump = 220;
         this.minJump = 10;
 
-        this.justJumped = false;
-        this.longJump = false;
+        this.isFalling = false;
+
+        this.jumpHeight = 0;
+        this.distance = 0;
     }
     init() {
         super.init();
-        this.characterAnimations();
+        this.characterAnimations();        
+        this.initEffects();
         this.gamepad = this.gamepads.get(0);
     }
     update(step) {
         super.update(step);
         this.updateInput(step);
         this.updatePosition(step);
+        this.updateJump(step);
+
+        if (this.isFalling) {
+            this.gravity += .1;
+        }   else this.gravity = 2;
     }
-    updateGamepad() {
+    updateGamepad(step) {
         if (this.gamepad.connected) {
             if(this.gamepad.stickLeft) {
+                var z = this.x;
                 this.x += this.gamepad.stickLeft.x * this.speed;
+                this.animation.gotoAndPlay('walking');
+                if (z > this.x) {
+                    this.flippedX = true;
+                } else if (z < this.x) {
+                    this.flippedX = false;
+                }   else {
+                    this.animation.gotoAndPlay('idle');
+                }
             }
         //jump like keyboard later
-        if (this.gamepad.pressed("A")) {
-                //jump 
-            };
+        if (this.gamepad.pressed(0)) {
+            console.log('a')
+            if (!this.isJumping) {
+                console.log(step)
+                this.vel += Math.floor(step);
+            }
+        }
+        if (this.gamepad.justReleased(0)) {
+            if (!this.isJumping) {
+                this.calcStep();
+            }
+        }
         }
     }
     updateKeyboard(step) {
@@ -61,56 +87,55 @@ class Character extends rune.display.Sprite {
         //jump call 
         if (this.keyboard.pressed("SPACE")) {
             if (!this.isJumping) {
-                //console.log(step);
-                //console.log('just_press')
                 this.vel += Math.floor(step);
             }
         }
         if (this.keyboard.justReleased("SPACE")) {
             if (!this.isJumping) {
                 console.log(this.vel)
-                //console.log('release')
                 this.calcStep();
-                this.justJumped = true;
             }
         }
     }
     calcStep() {
-        var height = 0;
-        var distance = 0;
+        var effect;
         if (this.vel > 0 && this.vel < 100) {
-            height = 10;
-            distance = 20;
+            this.jumpHeight = 15;
+            this.distance = this.minJump;
+            effect = 'jump';
         }
         else if (this.vel > 100 && this.vel < 300){
-            height = 30;
-            distance = 50;
+            this.jumpHeight = 30;
+            this.distance = 50;
+            effect = 'jump';
         }   
         else if (this.vel > 300 && this.vel < 500){
-            height = 80;
-            distance = 120;
+            this.jumpHeight = 80;
+            this.distance = 80;
+            effect = 'jump_medium';
         }
         else if (this.vel > 500 && this.vel < 700){
-            height = 90;
-            distance = 160;
+            this.jumpHeight = 90;
+            this.distance = 120;
+            effect = 'jump_medium';
         }
         else if (this.vel > 700 && this.vel < 900){
-            height = 90;
-            distance = 200;
+            this.jumpHeight = 90;
+            this.distance = 150;
+            effect = 'jump_medium';
         }
         else if (this.vel > 900 && this.vel < 1100){
-            height = 100;
-            distance = 240;
-            this.longJump = true;
+            this.jumpHeight = 100;
+            this.distance = 200;
+            effect = 'jump_far';
         }
         else {
-            height = 120;
-            distance = this.maxJump;
-            this.longJump = true;
+            this.jumpHeight = 120;
+            this.distance = this.maxJump;
+            effect = 'jump_far';
         }
-        this.updateJump(height, distance);
         this.vel = 0;
-        //this.keyboard.reset();
+        this.effects(effect);
     }
     //input update  
     updateInput(step){
@@ -127,8 +152,10 @@ class Character extends rune.display.Sprite {
         //later check if character is on a cloud or etcetc
         if (this.isJumping) {
             this.y += this.gravity;
+            this.isFalling = true;
         } else {
             console.log('on or in.. cloud')
+            this.isFalling = false;
         }
     }
     gotHit() {
@@ -140,18 +167,39 @@ class Character extends rune.display.Sprite {
             }, this);
         }
     }
-    //height = sent value for desired - Y ; distance = same but + X
-    updateJump(height, distance) {
-        var a = 0;
-        var b = 0;
-        do {
-            this.y -= .2;
-            a += .2;
-        } while (a < height);
-        
-        do {
-            this.x += .5;
-            b += .5;
-        }   while (b < distance);
+    //jumpHeight = sent value for desired - Y ; distance = same but + X
+    updateJump() {
+        if (this.jumpHeight > 0) {
+            this.y -= 12;
+            this.jumpHeight -= 10;
+        } 
+        if (this.distance > 0) {
+            this.x += 6;
+            this.distance -= 8;
+        } 
+    }
+    initEffects() {
+        this.jump = this.application.sounds.sound.get('jump', false);
+        this.jump_medium = this.application.sounds.sound.get('jump_medium', false);
+        this.jump_far = this.application.sounds.sound.get('jump_far', false);
+
+        this.hit = this.application.sounds.sound.get('hitHurt', false);
+    }
+    effects(effect) {
+        // var jump = this.application.sounds.sound.get('jump', false);
+        // var jump_medium = this.application.sounds.sound.get('jump_medium', false);
+        // var jump_far = this.application.sounds.sound.get('jump_far', false);
+
+        // var hit = this.application.sounds.sound.get('hitHurt', false);
+
+        if (effect === 'jump_medium') {
+            this.jump_medium.play();
+        }   else if (effect === 'jump_far') {
+            this.jump_far.play();
+        }   else if (effect === 'jump') {
+            this.jump.play();
+        }   else if (effect === 'hit') {
+            this.hit.play();
+        }
     }
 }
