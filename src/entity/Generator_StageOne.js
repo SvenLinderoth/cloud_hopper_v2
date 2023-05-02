@@ -18,10 +18,25 @@ class Generator_StageOne {
         var min = 100;
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    getEnemy(group) {
-        if (group < this.maxEnemies) {
+    randomDuration() {
+        const duration = [5000, 6000, 7000, 8000, 9000, 10000];
+        const arrInd = Math.floor(Math.random() * duration.length);
+  
+        return duration[arrInd];
+    }
+    getEnemy(camera) {
+        var enemy = new Cloud_Dangerous(
+            (camera.viewport.x + camera.viewport.width + 80),
+            this.randomY()
+        );
+        return enemy;
+    }
+    //see if player has shield active, or randomise if shield should be generated
+    getItem(players_shield) {
+        if (Math.floor(Math.random() * 10) === 0 && players_shield === false) {
             return true;
-        }
-        else return false;
+          } else {
+            return false;
+          }
     }
 }

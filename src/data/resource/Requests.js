@@ -53,6 +53,8 @@ cloud_hop.data.Requests.prototype.m_construct = function() {
 	this.add("lollipopv1", "./../asset/img/lollipopv1.png");
 	this.add("pink_frog", "./../asset/img/pink_frog.png");
 	this.add("renthy", "./../asset/img/renthy.png");
+	this.add("renthy_shell", "./../asset/img/renthy_shell.png");
+	this.add("shellshield", "./../asset/img/shellshield.png");
 	this.add("sleepyCloud", "./../asset/img/sleepyCloud.png");
 	this.add("blipSelect", "./../asset/wav/blipSelect.wav");
 	this.add("fall", "./../asset/wav/character_effects/fall.wav");
@@ -62,6 +64,7 @@ cloud_hop.data.Requests.prototype.m_construct = function() {
 	this.add("jump_medium", "./../asset/wav/character_effects/jump_medium.wav");
 	this.add("pickupCoin", "./../asset/wav/character_effects/pickupCoin.wav");
 	this.add("powerUp", "./../asset/wav/character_effects/powerUp.wav");
-	this.add("mainmenu_music_intro", "./../asset/wav/mainmenu_music_intro.wav");
-	this.add("mainmenu_v2", "./../asset/wav/mainmenu_v2.wav");
+	this.add("game_over", "./../asset/wav/game_over.mp3");
+	this.add("main_menu_cloudhop", "./../asset/wav/main_menu_cloudhop.wav");
+	this.add("music_cloudhop", "./../asset/wav/music_cloudhop.wav");
 };

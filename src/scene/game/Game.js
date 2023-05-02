@@ -32,11 +32,15 @@ cloud_hop.scene.Game = function() {
     this.getScore = function () {
         return score;
     }
-
     //this.application.sounds finns överallt
     this.playSoundItem = function () {
-        var soundEff = this.application.sounds.sound.get('pickupCoin', false);
-        soundEff.play();
+        var coin_effect = this.application.sounds.sound.get('pickupCoin', false);
+        coin_effect.play();
+    }
+    //this.application.sounds finns överallt
+    this.playGameOver = function () {
+        var gameover = this.application.sounds.sound.get('game_over', false);
+        gameover.play();
     }
 };
 
@@ -93,15 +97,19 @@ cloud_hop.scene.Game.prototype.init = function() {
     //candy group
     //--------------------------------------------------------------
     this.candyGroup = new rune.display.DisplayGroup(this.stage);
+   //--------------------------------------------------------------
+    //shield group
+    //--------------------------------------------------------------
+    this.shieldGroup = new rune.display.DisplayGroup(this.stage);
     //--------------------------------------------------------------
     //enemy cloud
     //--------------------------------------------------------------
-    this.enemy = new Cloud_Dangerous(
-        (this.background.x + this.background.width),
-        this.generator.randomY()
-    );
+    // this.enemy = new Cloud_Dangerous(
+    //     (this.background.x + this.background.width),
+    //     this.generator.randomY()
+    // );
     this.enemyGroup = new rune.display.DisplayGroup(this.stage);
-    this.enemyGroup.addMember(this.enemy);
+    //this.enemyGroup.addMember(this.enemy);
     //--------------------------------------------------------------
     //cloud neutral into cloudgroup (use this.cloud methods)
     //--------------------------------------------------------------
@@ -119,8 +127,20 @@ cloud_hop.scene.Game.prototype.init = function() {
     this.cameras.getCameraAt(0).targets.add(this.player);
     //--------------------------------------------------------------
     //music on music (master, music, sound)
-    this.music_menu = this.application.sounds.music.get('mainmenu_music_intro', false);
-    this.music_menu.volume = .4;
+    this.music_bg = this.application.sounds.music.get('music_cloudhop', true);
+    this.music_bg.volume = .5;
+    this.music_bg.play();
+
+    this.timer = this.timers.create({
+        duration: this.generator.randomDuration(),
+        repeat: 0,  
+        onComplete: () => {
+            this.generator.getEnemy(this.cameras.getCameraAt(0));
+            this.timer.m_paused = true;
+            //this.generator.getEnemy(this.cameras.getCameraAt(0));
+        },
+        scope: this,
+    }, true);
 };
 
 /**
@@ -151,7 +171,7 @@ cloud_hop.scene.Game.prototype.update = function(step) {
             this.stage.addChild(newBackground);
             this.background = newBackground;
     }
-    if (this.grass.x < camera.viewport.x) {
+    if (this.grass.x < camera.viewport.x + 200) {
         this.grass.dispose();
     }
     this.grass = new rune.display.Graphic(
@@ -173,12 +193,17 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     this.text.left = camera.viewport.left + 20;
     this.stage.addChild(this.text);
     
-    if (this.generator.getEnemy(this.enemyGroup.getMembers().length)) {
-        var enemyCloud = new Cloud_Dangerous(
-            (camera.viewport.x + camera.viewport.width + 80),
-            this.generator.randomY()
-        );
-        this.enemyGroup.addMember(enemyCloud);
+    if (this.timer.paused) {
+        this.timer = this.timers.create({
+            duration: this.generator.randomDuration(),
+            repeat: 0,  
+            onComplete: () => {
+                var enemy = this.generator.getEnemy(this.cameras.getCameraAt(0));
+                this.timer.m_paused = true;
+                this.enemyGroup.addMember(enemy);
+            },
+            scope: this,
+        }, true);
     }
     //--------------------------------------------------------------
     //ENEMY GROUP; RENDER
@@ -195,7 +220,21 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //ENEMY HIT CHECK
     //--------------------------------------------------------------
     if (this.player.hitTestGroup(this.enemyGroup, this.player.gotHit)) {
-       this.player.effects('hit');
+        if (!this.player.shield) {
+            this.player.effects('hit');  
+            this.gameOver();
+        } else {
+            this.player.effects('hit');  
+            //new player without shield
+            var x = this.player.x;
+            var y = this.player.y;
+
+            this.cameras.getCameraAt(0).targets.remove(this.player);
+            this.player.dispose();
+
+            this.player = new Character(x, y, 32, 32, 'renthy');
+            this.cameras.getCameraAt(0).targets.add(this.player);
+        }
     };
     //--------------------------------------------------------------
     //cloud gen, candy generate
@@ -204,17 +243,43 @@ cloud_hop.scene.Game.prototype.update = function(step) {
         var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + this.generator.randomX()), this.generator.randomY());
         //candy, x, y, value (standard candy = 1)
         //tar alla clouds x och y, och centrerar en godis på toppen av molnet
-        var candy = new Candy((cloud.x + 6), (cloud.y - 10), 1);
+        if (!this.generator.getItem(this.player.shield)) {
+            var candy = new Candy((cloud.x + 6), (cloud.y - 10), 1);
+            this.candyGroup.addMember(candy);
+        } else {
+            var shield = new ShellShield((cloud.x + 1), (cloud.y - 15));
+            this.shieldGroup.addMember(shield);
+        }
         this.cloudGroup.addMember(cloud);
-        this.candyGroup.addMember(candy);
     } 
-    //console.log(this.cloudGroup.getMembers().length)
-        this.cloudGroup.forEachMember(function(c) {
-            this.stage.addChild(c);
-            if (c.x < camera.viewport.x) {
-                c.dispose();
+    //render clouds on stage
+    this.cloudGroup.forEachMember(function(c) {
+        this.stage.addChild(c);
+        if (c.x < camera.viewport.x) {
+            c.dispose();
+        }
+    }, this);
+    //render potential shield objects on stage
+    //hittest to shield
+        this.shieldGroup.forEachMember(function(s) {
+            this.stage.addChild(s);
+            if (s.x < camera.viewport.x) {
+                s.dispose();
             }
+            if (this.player.hitTestObject(s)) {
+                this.player.shield = true;
+                s.dispose();
+                //new instance character with shell
+                var x = this.player.x;
+                var y = this.player.y;
+                this.cameras.getCameraAt(0).targets.remove(this.player);
+                this.player.dispose();
+                this.player = new Character(x, y, 32, 32, 'renthy_shell');
+                this.player.shield = true;
+                this.cameras.getCameraAt(0).targets.add(this.player);
+            };
         }, this);
+    //render candies on stage
         this.candyGroup.forEachMember(function(c) {
             this.stage.addChild(c);
             if (this.player.hitTestObject(c)) { 
@@ -226,7 +291,6 @@ cloud_hop.scene.Game.prototype.update = function(step) {
                 this.playSoundItem();
             }
         }, this);   
-    
     //--------------------------------------------------------------
     //hittest clouds
     //--------------------------------------------------------------
@@ -240,19 +304,27 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //hittest grass, fell to ground = call to game over method later
     //--------------------------------------------------------------
     if (this.grass.hitTestObject(this.player)) {
-        if (this.player.y > 570) this.player.gravity = 0;
-        console.log('game over, landed on grass');
-        console.log('score: ' + this.getScore());
-
-        this.text = new rune.text.BitmapField("Game Over! Score: " + this.getScore());
-
-        this.text.center = camera.viewport.center;
-        this.text.y = this.text.y - 30;
-    
-        this.stage.addChild(this.text);
+        if (this.player.y > 570)
+        this.gameOver();
     }
     //--------------------------------------------------------------
     //--------------------------------------------------------------
+};
+cloud_hop.scene.Game.prototype.gameOver = function() {
+    this.music_bg.stop();
+    this.playGameOver();
+    var camera = this.cameras.getCameraAt(0);
+    this.text.dispose();
+    this.text = new rune.text.BitmapField("Game Over! Score: " + this.getScore());
+
+    this.text.center = camera.viewport.center;
+    this.text.y = this.text.y - 30;
+
+    this.stage.addChild(this.text);
+
+    this.player.gravity = 0;
+    //freeze character 
+    //add death animation
 };
 
 /**
