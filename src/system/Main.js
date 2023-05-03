@@ -25,7 +25,7 @@ cloud_hop.system.Main = function() {
         developer: "com.linderoth",
         app: "cloud_hop",
         build: "0.0.0",
-        scene: cloud_hop.scene.Game,
+        scene: cloud_hop.scene.Menu,
         resources: cloud_hop.data.Requests,
         useGamepads:true,
         useKeyboard:true,

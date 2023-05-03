@@ -35,6 +35,7 @@ cloud_hop.scene.Game = function() {
     //this.application.sounds finns överallt
     this.playSoundItem = function () {
         var coin_effect = this.application.sounds.sound.get('pickupCoin', false);
+        coin_effect.volume = .5;
         coin_effect.play();
     }
     //this.application.sounds finns överallt
@@ -137,7 +138,6 @@ cloud_hop.scene.Game.prototype.init = function() {
         onComplete: () => {
             this.generator.getEnemy(this.cameras.getCameraAt(0));
             this.timer.m_paused = true;
-            //this.generator.getEnemy(this.cameras.getCameraAt(0));
         },
         scope: this,
     }, true);
@@ -171,7 +171,7 @@ cloud_hop.scene.Game.prototype.update = function(step) {
             this.stage.addChild(newBackground);
             this.background = newBackground;
     }
-    if (this.grass.x < camera.viewport.x + 200) {
+    if (this.grass.x < camera.viewport.x) {
         this.grass.dispose();
     }
     this.grass = new rune.display.Graphic(
@@ -225,15 +225,20 @@ cloud_hop.scene.Game.prototype.update = function(step) {
             this.gameOver();
         } else {
             this.player.effects('hit');  
-            //new player without shield
-            var x = this.player.x;
-            var y = this.player.y;
-
-            this.cameras.getCameraAt(0).targets.remove(this.player);
-            this.player.dispose();
-
-            this.player = new Character(x, y, 32, 32, 'renthy');
-            this.cameras.getCameraAt(0).targets.add(this.player);
+            //new player without shield after flicker (this.player.gotHit)
+            this.timers.create({
+                duration: 2000,
+                repeat: 0,  
+                onComplete: () => {
+                    var x = this.player.x;
+                    var y = this.player.y;
+                    this.cameras.getCameraAt(0).targets.remove(this.player);
+                    this.player.dispose();
+                    this.player = new Character(x, y, 32, 32, 'renthy');
+                    this.cameras.getCameraAt(0).targets.add(this.player);
+                },
+                scope: this,
+            }, true);
         }
     };
     //--------------------------------------------------------------
@@ -241,6 +246,9 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //--------------------------------------------------------------
     if (this.cloudGroup.getMembers().length < 10) {
         var cloud = new Cloud_Neutral(this.previousCloudX = (this.previousCloudX + this.generator.randomX()), this.generator.randomY());
+        if (this.generator.fallenCloud()) {
+            cloud.fallenCloud = true;
+        } else cloud.fallenCloud = false;
         //candy, x, y, value (standard candy = 1)
         //tar alla clouds x och y, och centrerar en godis på toppen av molnet
         if (!this.generator.getItem(this.player.shield)) {
@@ -255,7 +263,27 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //render clouds on stage
     this.cloudGroup.forEachMember(function(c) {
         this.stage.addChild(c);
+        if (this.player.hitTestObject(c) && c.fallenCloud)  {
+            //c.fallenClouds();
+            this.timers.create({
+                duration: 2000,
+                repeat: 0,  
+                onStart: () => {
+                    c.flicker.start(2000, 30, function() {
+                        //add music for cloud gonna fall ?
+                    }, this);
+                },
+                onComplete: () => {
+                    c.fall = true;
+                },
+                scope: this,
+            }, true);
+        }
         if (c.x < camera.viewport.x) {
+            c.dispose();
+        }
+        //has fallen
+        if (c.y > 500) {
             c.dispose();
         }
     }, this);
@@ -267,16 +295,29 @@ cloud_hop.scene.Game.prototype.update = function(step) {
                 s.dispose();
             }
             if (this.player.hitTestObject(s)) {
-                this.player.shield = true;
-                s.dispose();
-                //new instance character with shell
-                var x = this.player.x;
-                var y = this.player.y;
-                this.cameras.getCameraAt(0).targets.remove(this.player);
-                this.player.dispose();
-                this.player = new Character(x, y, 32, 32, 'renthy_shell');
-                this.player.shield = true;
-                this.cameras.getCameraAt(0).targets.add(this.player);
+                if (!this.player.shield) {
+                    this.player.shield = true;
+                    s.dispose();
+                    //play sound for powerup 
+                    this.player.power_up.play();
+                    //new instance character with shell
+                    var x = this.player.x;
+                    var y = this.player.y;
+                    this.cameras.getCameraAt(0).targets.remove(this.player);
+                    this.player.dispose();
+                    this.player = new Character(x, y, 32, 32, 'renthy_shell');
+                    this.player.shield = true;
+                    this.cameras.getCameraAt(0).targets.add(this.player);
+                }
+                else {
+                    this.player.shield = true;
+                    s.dispose();
+                    //play sound for powerup 
+                    this.player.power_up.play();
+                    //play other sound for points maybe ?
+                    //bonus points already shielded
+                    this.setScore(3);
+                }
             };
         }, this);
     //render candies on stage
@@ -295,7 +336,6 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //hittest clouds
     //--------------------------------------------------------------
     if (this.player.hitTestGroup(this.cloudGroup)) {
-        //console.log('ON CLOUD')
         this.player.isJumping = false;
     } else {
         this.player.isJumping = true;
@@ -306,25 +346,35 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     if (this.grass.hitTestObject(this.player)) {
         if (this.player.y > 570)
         this.gameOver();
+    } else if (this.player.y > 580) {
+        this.gameOver();
     }
     //--------------------------------------------------------------
     //--------------------------------------------------------------
 };
 cloud_hop.scene.Game.prototype.gameOver = function() {
-    this.music_bg.stop();
-    this.playGameOver();
-    var camera = this.cameras.getCameraAt(0);
-    this.text.dispose();
-    this.text = new rune.text.BitmapField("Game Over! Score: " + this.getScore());
-
-    this.text.center = camera.viewport.center;
-    this.text.y = this.text.y - 30;
-
-    this.stage.addChild(this.text);
-
-    this.player.gravity = 0;
+    this.timers.create({
+        duration: 2500,
+        repeat: 0, 
     //freeze character 
     //add death animation
+        onStart: () => {
+            this.music_bg.stop();
+            this.playGameOver();
+            var camera = this.cameras.getCameraAt(0);
+            this.text.dispose();
+            this.text = new rune.text.BitmapField("Game Over! Score: " + this.getScore());
+            this.text.center = camera.viewport.center;
+            this.text.y = this.text.y - 30;
+            this.stage.addChild(this.text);
+            this.player.gravity = 0;
+        },
+        onComplete: () => {
+            //change to game over scene istället sen med meny för omstart och gå tillbaka till menyn
+            this.application.scenes.load([new cloud_hop.scene.Game_Over()]);
+        },
+        scope: this,
+    }, true);
 };
 
 /**

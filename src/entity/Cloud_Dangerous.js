@@ -4,7 +4,7 @@ class Cloud_Dangerous extends rune.display.Sprite {
 
         this.speed = 1;
         //this.hitbox.set(0,0,32,32)
-        this.hitbox.debug = true;
+        //this.hitbox.debug = true;
     }
     init() {
         super.init();

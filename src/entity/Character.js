@@ -2,7 +2,7 @@ class Character extends rune.display.Sprite {
     constructor(x, y, w, h, img){
         super(x, y, w, h, img);
 
-        this.hitbox.debug = true; 
+        //this.hitbox.debug = true; 
         this.hitbox.set(0, 2, 32, 26);
 
         this.speed = 2;
@@ -55,28 +55,39 @@ class Character extends rune.display.Sprite {
                 //this.animation.gotoAndPlay('walking');
                 if (z > this.x) {
                     this.flippedX = true;
+                    this.walking = true;
                 } else if (z < this.x) {
                     this.flippedX = false;
+                    this.walking = true;
                 } else if (this.gamepad.stickLeft.y < 0) {
                     this.ducking = true;
                     this.hitbox.set(0, 16, 32, 13);
-                    this.animation.gotoAndPlay('duck');
+                    this.walking = false;
+                    //this.animation.gotoAndPlay('duck');
                 }
                 else {
-                    //this.animation.gotoAndPlay('idle');
+                    this.walking = false;
+                    this.flippedX = false;
+                    this.hitbox.set(0, 2, 32, 26);
                     this.ducking = false;
                 }
             }
         //jump like keyboard later
         if (this.gamepad.pressed(0) && this.ducking === false) {
             if (!this.isJumping) {
-                console.log(step)
                 this.vel += Math.floor(step);
+                this.walking = false;
+                this.flippedX = false;
+                this.loadingJump = true;
             }
         }
         if (this.gamepad.justReleased(0) && this.ducking === false) {
             if (!this.isJumping) {
+                this.walking = false;
                 this.calcStep();
+                this.flippedX = false;
+                this.isJumping = true;
+                this.loadingJump = false;
             }
         }
         }
@@ -130,7 +141,7 @@ class Character extends rune.display.Sprite {
         else if (this.keyboard.pressed('DOWN')) {
             this.walking = false;
             this.hitbox.set(0, 16, 32, 13);
-            this.animation.gotoAndPlay('duck');
+            //this.animation.gotoAndPlay('duck');
             this.ducking = true;
         } 
         else {
@@ -235,6 +246,7 @@ class Character extends rune.display.Sprite {
         this.jump = this.application.sounds.sound.get('jump', false);
         this.jump_medium = this.application.sounds.sound.get('jump_medium', false);
         this.jump_far = this.application.sounds.sound.get('jump_far', false);
+        this.power_up = this.application.sounds.sound.get('power_up', false);
 
         this.hit = this.application.sounds.sound.get('hitHurt', false);
     }
