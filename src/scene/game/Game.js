@@ -43,6 +43,12 @@ cloud_hop.scene.Game = function() {
         var gameover = this.application.sounds.sound.get('game_over', false);
         gameover.play();
     }
+    // this.playDanger = function () {
+    //     var danger = this.application.sounds.sound.get('//', false);
+    //     danger.play();
+    // }
+    //this.highscore = new rune.data.Highscores('cloud_hop', 5, 1);
+    this.sentHighScore = false;
 };
 
 //------------------------------------------------------------------------------
@@ -80,7 +86,7 @@ cloud_hop.scene.Game.prototype.init = function() {
         -200,
         1280,
         720,
-        'graphic_background'
+        'background_night_2'
     )
     this.stage.addChild(this.background);
     //--------------------------------------------------------------
@@ -141,6 +147,16 @@ cloud_hop.scene.Game.prototype.init = function() {
         },
         scope: this,
     }, true);
+
+    this.indicators = new rune.display.DisplayGroup(this.stage);
+
+    this.enemyTimer = this.timers.create({
+        duration: 0,
+        repeat: 0,
+        onComplete: () => {
+            this.enemyTimer.m_paused = true; 
+        },
+    },true);
 };
 
 /**
@@ -166,7 +182,7 @@ cloud_hop.scene.Game.prototype.update = function(step) {
                 newY,
                 1280,
                 720,
-                'graphic_background'
+                'background_night_2'
             );
             this.stage.addChild(newBackground);
             this.background = newBackground;
@@ -210,11 +226,39 @@ cloud_hop.scene.Game.prototype.update = function(step) {
     //--------------------------------------------------------------
     this.enemyGroup.forEachMember(function(e) {
         this.stage.addChild(e);
-        e.x -= e.speed;
+        e.speedUp(1);
         if (e.x < camera.viewport.x) {
             this.enemyGroup.removeMember(e);
             e.dispose();
-        }
+        } 
+        else if (e.x > camera.viewport.x + camera.viewport.width) {
+            this.timers.create({
+                duration: 2000,
+                repeat: 0,  
+                onStart: () => {
+                    this.indicator = new rune.display.Sprite(
+                        (camera.viewport.x + camera.viewport.width - 30),
+                        e.y,
+                        16, 16, 
+                        'danger'
+                     );
+                     if (this.indicators.getMembers().length < 1) {
+                        this.indicators.addMember(this.indicator);
+                     }
+                },
+                onComplete: () => {
+                    this.indicators.forEachMember(function(i) {
+                        this.indicators.removeMember(i, true);
+                    },this);
+                },
+                scope: this,
+            }, true);
+        }   
+    },this);
+
+    this.indicators.forEachMember(function(i) {
+        i.x = camera.viewport.x + camera.viewport.width - 30;
+        this.stage.addChild(i);
     },this);
     //--------------------------------------------------------------
     //ENEMY HIT CHECK
@@ -359,18 +403,36 @@ cloud_hop.scene.Game.prototype.gameOver = function() {
     //freeze character 
     //add death animation
         onStart: () => {
+            //score
+            var score = this.getScore();
             this.music_bg.stop();
-            this.playGameOver();
+            //this.playGameOver();
             var camera = this.cameras.getCameraAt(0);
             this.text.dispose();
-            this.text = new rune.text.BitmapField("Game Over! Score: " + this.getScore());
+            this.text = new rune.text.BitmapField("Game Over! Score: " + score);
             this.text.center = camera.viewport.center;
             this.text.y = this.text.y - 30;
             this.stage.addChild(this.text);
             this.player.gravity = 0;
+
+            if (!this.sentHighScore) {
+                var sent = this.application.highscores.send(score);
+                this.sentHighScore = true;
+                if (sent > -1 && sent < 4) {
+                    console.log('sent to highscore');
+                    //play highscore sound
+                    console.log(sent)
+                } else if (sent === 4) {
+                    console.log('NEW HIGHEST SCORE');
+                    //PLAY TOP highscore sound
+                } else if (sent < 0) {
+                    //play game over sound
+                    this.playGameOver();
+                }
+            };
         },
         onComplete: () => {
-            //change to game over scene istället sen med meny för omstart och gå tillbaka till menyn
+            //change to game over scene
             this.application.scenes.load([new cloud_hop.scene.Game_Over()]);
         },
         scope: this,

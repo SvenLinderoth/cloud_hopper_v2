@@ -49,7 +49,7 @@ class Game_Over extends rune.scene.Scene {
             this.sound.play();
         } 
 
-        if( this.keyboard.justPressed('ENTER') || this.keyboard.justPressed('SPACE') || this.gamepads.justPressed(0) || this.gamepads.justPressed(15)) {
+        if( this.keyboard.justPressed('ENTER') || this.keyboard.justPressed('SPACE') || this.gamepads.justPressed(1) || this.gamepads.justPressed(12)) {
             this.m_menu.select();
             this.sound_select.play();
         } 
@@ -63,14 +63,14 @@ class Game_Over extends rune.scene.Scene {
                 break;
 
             case 'High Score': 
-                //scene for highscore 
+                this.application.scenes.load([new cloud_hop.scene.HighScore()]);
                 break;
             
             case 'Main Menu':
                 this.application.scenes.load([new cloud_hop.scene.Menu()]);
                 break;
             
-            case 'Exit Game':
+            case 'Exit':
                 //quit app
                 break;
         }

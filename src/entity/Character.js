@@ -2,9 +2,6 @@ class Character extends rune.display.Sprite {
     constructor(x, y, w, h, img){
         super(x, y, w, h, img);
 
-        //this.hitbox.debug = true; 
-        this.hitbox.set(0, 2, 32, 26);
-
         this.speed = 2;
         this.gamepad = null; 
         //init Y position for going back after jump, use platforms/clouds later for check with char?
@@ -29,12 +26,19 @@ class Character extends rune.display.Sprite {
         this.ducking = false;
         this.walking = false;
         this.loadingJump = false;
+
+        this.loader = 0;
     }
     init() {
         super.init();
         this.characterAnimations();        
         this.initEffects();
         this.gamepad = this.gamepads.get(0);
+
+        this.hitbox.set(5, 5, 20, 24);
+        //this.hitbox.debug = true; 
+        this.jumpBar = new rune.ui.Progressbar(32, 3, "#FFFFFF", "#00FF00");
+        this.jumpBar.y -= 1;
     }
     update(step) {
         super.update(step);
@@ -42,28 +46,35 @@ class Character extends rune.display.Sprite {
         this.updatePosition(step);
         this.updateJump(step);
         this.currentAnimation(step);
-
+        
         if (this.isFalling) {
             this.gravity += .1;
         }   else this.gravity = 2;
+
+        if (this.loadingJump) {
+            this.loader += .05;
+            this.jump_charge.play();
+        } else {
+            this.loader = 0;
+            this.jump_charge.stop();
+        }
+        this.addChild(this.jumpBar)
     }
     updateGamepad(step) {
         if (this.gamepad.connected) {
             if(this.gamepad.stickLeft) {
                 var z = this.x;
                 this.x += this.gamepad.stickLeft.x * this.speed;
-                //this.animation.gotoAndPlay('walking');
                 if (z > this.x) {
                     this.flippedX = true;
                     this.walking = true;
                 } else if (z < this.x) {
                     this.flippedX = false;
                     this.walking = true;
-                } else if (this.gamepad.stickLeft.y < 0) {
+                } else if (this.gamepad.stickLeft.y > 0) {
                     this.ducking = true;
                     this.hitbox.set(0, 16, 32, 13);
                     this.walking = false;
-                    //this.animation.gotoAndPlay('duck');
                 }
                 else {
                     this.walking = false;
@@ -72,8 +83,21 @@ class Character extends rune.display.Sprite {
                     this.ducking = false;
                 }
             }
+        if (this.gamepad.pressed(14)) {
+            this.flippedX = true;
+            this.walking = true;
+            this.x -= this.speed;
+        } else if (this.gamepad.pressed(15)) {
+            this.flippedX = false;
+            this.walking = true;
+            this.x += this.speed;
+        } else if (this.gamepad.pressed(13)){
+            this.ducking = true;
+            this.hitbox.set(0, 16, 32, 13);
+            this.walking = false;
+        }
         //jump like keyboard later
-        if (this.gamepad.pressed(0) && this.ducking === false) {
+        if (this.gamepad.pressed(1) && this.ducking === false) {
             if (!this.isJumping) {
                 this.vel += Math.floor(step);
                 this.walking = false;
@@ -81,7 +105,7 @@ class Character extends rune.display.Sprite {
                 this.loadingJump = true;
             }
         }
-        if (this.gamepad.justReleased(0) && this.ducking === false) {
+        if (this.gamepad.justReleased(1) && this.ducking === false) {
             if (!this.isJumping) {
                 this.walking = false;
                 this.calcStep();
@@ -101,6 +125,7 @@ class Character extends rune.display.Sprite {
         }
         else if (this.loadingJump) {
             this.animation.gotoAndPlay('loading_jump');
+            this.jumpBar.m_progress = this.loader;
         }
         else if (this.ducking) {
             this.animation.gotoAndPlay('duck');
@@ -164,22 +189,22 @@ class Character extends rune.display.Sprite {
             this.distance = 50;
             effect = 'jump';
         }   
-        else if (this.vel > 300 && this.vel < 500){
+        else if (this.vel > 300 && this.vel < 400){
             this.jumpHeight = 80;
             this.distance = 80;
             effect = 'jump_medium';
         }
-        else if (this.vel > 500 && this.vel < 700){
+        else if (this.vel > 400 && this.vel < 500){
             this.jumpHeight = 90;
             this.distance = 120;
             effect = 'jump_medium';
         }
-        else if (this.vel > 700 && this.vel < 900){
+        else if (this.vel > 500 && this.vel < 600){
             this.jumpHeight = 90;
             this.distance = 150;
             effect = 'jump_medium';
         }
-        else if (this.vel > 900 && this.vel < 1100){
+        else if (this.vel > 600 && this.vel < 700){
             this.jumpHeight = 100;
             this.distance = 200;
             effect = 'jump_far';
@@ -212,8 +237,7 @@ class Character extends rune.display.Sprite {
             this.y += this.gravity;
             this.isFalling = true;
             //this.animation.gotoAndPlay('inAir');
-        } else {
-            console.log('on or in.. cloud')
+        } else {    
             this.isFalling = false;
         }
     }
@@ -247,6 +271,9 @@ class Character extends rune.display.Sprite {
         this.jump_medium = this.application.sounds.sound.get('jump_medium', false);
         this.jump_far = this.application.sounds.sound.get('jump_far', false);
         this.power_up = this.application.sounds.sound.get('power_up', false);
+
+        this.jump_charge = this.application.sounds.sound.get('jump_charge', false);
+        this.jump_charge.volume = .5;
 
         this.hit = this.application.sounds.sound.get('hitHurt', false);
     }

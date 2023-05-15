@@ -18,6 +18,8 @@ npx google-closure-compiler \
 --js "./../../src/entity/Generator_StageOne.js" \
 --js "./../../src/scene/menu/Menu.js" \
 --js "./../../src/scene/game/Game.js" \
+--js "./../../src/scene/menu/HighScore.js" \
+--js "./../../src/scene/menu/Instructions.js" \
 --js "./../../src/system/Main.js" \
 --js "./../../src/scope/Alias.js" \
 --js_output_file "./../../dist/cloud_hop.js";

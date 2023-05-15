@@ -6,7 +6,7 @@ class Generator_StageOne {
         this.maxEnemies = 1;
 
         this.shieldOdds = 10;
-        this.fallenCloudOdds = 12;
+        this.fallenCloudOdds = 3;
     }
     init() {
         //
@@ -22,14 +22,14 @@ class Generator_StageOne {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
     randomDuration() {
-        const duration = [5000, 6000, 7000, 8000, 9000, 10000];
+        const duration = [7000, 8000, 9000, 10000, 11000, 12000];
         const arrInd = Math.floor(Math.random() * duration.length);
   
         return duration[arrInd];
     }
     getEnemy(camera) {
         var enemy = new Cloud_Dangerous(
-            (camera.viewport.x + camera.viewport.width + 80),
+            (camera.viewport.x + camera.viewport.width + 200),
             this.randomY()
         );
         return enemy;

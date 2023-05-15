@@ -1,4 +1,4 @@
-class Menu extends rune.scene.Scene {
+class Instructions extends rune.scene.Scene {
     constructor() {
         super();
 
@@ -7,27 +7,28 @@ class Menu extends rune.scene.Scene {
 
     init() {
         super.init();
-
         this.bg = new rune.display.Graphic(
             0,
             0,
             400,
             225,
-            'cloudhopText'
+            'howtoplay'
         );
         this.stage.addChild(this.bg);
 
         this.m_menu = new rune.ui.VTMenu();
         this.m_menu.onSelect(this.selectMenuOption, this);
-        this.m_menu.add('Start');
+        this.m_menu.add('Start Game');
         this.m_menu.add('High Score');
-        this.m_menu.add('How to Play');
+        this.m_menu.add('Main Menu');
         this.m_menu.add('Exit');
 
         this.m_menu.center = this.cameras.getCameraAt(0).viewport.center;
-
+        this.m_menu.x -= 130;
+        this.m_menu.y -= 60;
         this.stage.addChild(this.m_menu);
 
+        //change to instructions music
         this.background_music = this.application.sounds.music.get('main_menu_cloudhop', false);
         this.background_music.volume = .5;
         this.background_music.play();
@@ -35,11 +36,28 @@ class Menu extends rune.scene.Scene {
         this.sound = this.application.sounds.sound.get('blipSelect', true);
         this.sound.volume = .7;
         this.sound_select = this.application.sounds.sound.get('menu_select', true);
+
+        //add a flickering cloud sprite on position next to text falls
+        //
+        this.flick = false;
+        this.flick_cloud = new Cloud_Neutral(295, 75);
+        this.stage.addChild(this.flick_cloud);
+        this.flick_cloud.flicker.start(1000, 30, function() {
+            this.flick = true;
+        }, this);
+
     }
 
     update(step) {
         super.update(step); 
         this.updateInput(step);
+
+        if (this.flick) {
+            this.flick = false;
+            this.flick_cloud.flicker.start(1000, 30, function() {
+                this.flick = true;
+            }, this);
+        }
     }
 
     dispose() {
@@ -66,7 +84,7 @@ class Menu extends rune.scene.Scene {
 
     selectMenuOption(options) {
         switch (options.text) {
-            case 'Start':
+            case 'Start Game':
                 this.application.scenes.load([new cloud_hop.scene.Game()]);
                 break;
 
@@ -74,8 +92,8 @@ class Menu extends rune.scene.Scene {
                 this.application.scenes.load([new cloud_hop.scene.HighScore()]);
                 break;
             
-            case 'How to Play':
-                this.application.scenes.load([new cloud_hop.scene.Instructions()]);
+            case 'Main Menu':
+                this.application.scenes.load([new cloud_hop.scene.Menu()]);
                 break;
             
             case 'Exit':
@@ -84,4 +102,4 @@ class Menu extends rune.scene.Scene {
         }
     }
 }
-cloud_hop.scene.Menu = Menu;
+cloud_hop.scene.Instructions = Instructions;
