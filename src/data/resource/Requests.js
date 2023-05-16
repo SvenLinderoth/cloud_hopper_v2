@@ -53,7 +53,6 @@ cloud_hop.data.Requests.prototype.m_construct = function() {
 	this.add("grass2", "./../asset/img/grass2.png");
 	this.add("heart", "./../asset/img/heart.png");
 	this.add("howtoplay", "./../asset/img/howtoplay.png");
-	this.add("howtoplay_version_alpha", "./../asset/img/howtoplay_version_alpha.png");
 	this.add("lollipopv1", "./../asset/img/lollipopv1.png");
 	this.add("pink_frog", "./../asset/img/pink_frog.png");
 	this.add("renthy", "./../asset/img/renthy.png");

@@ -78,7 +78,7 @@ class Character extends rune.display.Sprite {
                 }
                 else {
                     this.walking = false;
-                    this.flippedX = false;
+                    //this.flippedX = false;
                     this.hitbox.set(0, 2, 32, 26);
                     this.ducking = false;
                 }
@@ -96,12 +96,12 @@ class Character extends rune.display.Sprite {
             this.hitbox.set(0, 16, 32, 13);
             this.walking = false;
         }
-        //jump like keyboard later
+        //jump buttons
         if (this.gamepad.pressed(1) && this.ducking === false) {
             if (!this.isJumping) {
                 this.vel += Math.floor(step);
                 this.walking = false;
-                this.flippedX = false;
+                //this.flippedX = false;
                 this.loadingJump = true;
             }
         }
@@ -109,11 +109,20 @@ class Character extends rune.display.Sprite {
             if (!this.isJumping) {
                 this.walking = false;
                 this.calcStep();
-                this.flippedX = false;
+                //this.flippedX = false;
                 this.isJumping = true;
                 this.loadingJump = false;
             }
         }
+         //jump upwards simple
+        if (this.gamepad.justPressed(0) && this.ducking === false) {
+            if (!this.isJumping) {
+                this.walking = false;    
+                //this.flippedX = false;
+                this.jumpHeight = 100;
+                this.effects('jump');
+            }
+        } 
         }
     }
     currentAnimation(step) {
@@ -149,7 +158,7 @@ class Character extends rune.display.Sprite {
             if (!this.isJumping) {
                 this.walking = false;
                 this.vel += Math.floor(step);
-                this.flippedX = false;
+                //this.flippedX = false;
                 this.loadingJump = true;
             }
         } 
@@ -157,7 +166,7 @@ class Character extends rune.display.Sprite {
             if (!this.isJumping) {
                 this.walking = false;
                 this.calcStep();
-                this.flippedX = false;
+                //this.flippedX = false;
                 this.isJumping = true;
                 this.loadingJump = false;
             } 
@@ -169,10 +178,19 @@ class Character extends rune.display.Sprite {
             //this.animation.gotoAndPlay('duck');
             this.ducking = true;
         } 
+        //jump upwards simple
+        else if (this.keyboard.justPressed("UP") && this.ducking === false) {
+            if (!this.isJumping) {
+                this.walking = false;    
+                this.flippedX = false;
+                this.jumpHeight = 100;
+                this.effects('jump');
+            }
+        } 
         else {
             this.walking = false;
             //this.animation.gotoAndPlay('idle');
-            this.flippedX = false;
+            //this.flippedX = false;
             this.hitbox.set(0, 2, 32, 26);
             this.ducking = false;
         }
@@ -224,7 +242,7 @@ class Character extends rune.display.Sprite {
     }
     //define character animations
     characterAnimations() {
-        this.animation.create('idle', [0,1], 2, true);
+        this.animation.create('idle', [2], 2, true);
         this.animation.create('walking', [2,3,4,5,6], 5, true);
 
         this.animation.create('jump', [8], 1, true);
@@ -237,7 +255,7 @@ class Character extends rune.display.Sprite {
             this.y += this.gravity;
             this.isFalling = true;
             //this.animation.gotoAndPlay('inAir');
-        } else {    
+        } else {
             this.isFalling = false;
         }
     }
@@ -256,8 +274,13 @@ class Character extends rune.display.Sprite {
                 this.isJumping = false;
             }
             if (this.distance > 0) {
+                if (!this.flippedX) {
                 this.x += distanceForce;
                 this.distance -= distanceForce;
+                } else {
+                    this.x = this.x - distanceForce;
+                    this.distance -= distanceForce;
+                }
             }
         }
     }
